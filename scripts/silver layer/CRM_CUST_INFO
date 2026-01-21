@@ -1,0 +1,69 @@
+-- Check for Duplicates and Nulls in Primary Key
+---Expectation - No result
+
+--SELECT cst_id, COUNT(*)
+--FROM bronze.crm_cust_info
+--GROUP BY cst_id
+--Having Count(*)>1 OR cst_id is Null
+
+-- We have duplicates
+
+-- Create table with no duplicates 
+--- Remove Unwanted spaces in strings of First name and last name
+--- Data Standardisation
+---
+USE DataWarehouse;
+GO
+
+IF OBJECT_ID('silver.crm_cust_info', 'U') IS NOT NULL
+    DROP TABLE silver.crm_cust_info;
+GO
+
+CREATE TABLE silver.crm_cust_info (
+    cst_id              INT,
+    cst_key             NVARCHAR(50),
+    cst_firstname       NVARCHAR(50),
+    cst_lastname        NVARCHAR(50),
+    cst_marital_status  NVARCHAR(50), -- ✅ Corrected Name
+    cst_gndr            NVARCHAR(50),
+    cst_create_date     DATE,
+    dwh_create_date     DATETIME2 DEFAULT GETDATE()
+);
+GO
+-- 1. Clear the existing data
+TRUNCATE TABLE silver.crm_cust_info;
+
+-- 2. Insert the cleaned data (excluding 'PO25')
+INSERT INTO silver.crm_cust_info (
+    cst_id, 
+    cst_key, 
+    cst_firstname, 
+    cst_lastname, 
+    cst_gndr, 
+    cst_marital_status, 
+    cst_create_date
+)
+SELECT
+    cst_id,
+    cst_key,
+    TRIM(cst_firstname) AS cst_firstname,
+    TRIM(cst_lastname) AS cst_lastname,
+    CASE 
+        WHEN UPPER(TRIM(cst_gndr)) = 'F' THEN 'Female'
+        WHEN UPPER(TRIM(cst_gndr)) = 'M' THEN 'Male'
+        ELSE 'n/a'
+    END AS cst_gndr,
+    CASE 
+        WHEN UPPER(TRIM(cst_material_status)) = 'S' THEN 'Single' 
+        WHEN UPPER(TRIM(cst_material_status)) = 'M' THEN 'Married'
+        ELSE 'n/a'
+    END AS cst_marital_status, 
+    cst_create_date
+FROM (
+    SELECT 
+        *, 
+        ROW_NUMBER() OVER(PARTITION BY cst_id ORDER BY cst_create_date DESC) as flag_last
+    FROM bronze.crm_cust_info
+) t 
+WHERE flag_last = 1 
+  AND cst_key != 'PO25'; -- This removes the specific row
