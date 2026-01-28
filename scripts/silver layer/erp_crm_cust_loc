@@ -1,0 +1,21 @@
+SELECT *
+FROM bronze.erp_crm_cust_loc
+
+-- Checking cid cleaning
+SELECT 
+REPLACE(cid,'-','')cid,
+cntry
+FROM bronze.erp_crm_cust_loc
+--checking country
+SELECT DISTINCT cntry
+FROM bronze.erp_crm_cust_loc
+
+INSERT INTO silver.erp_crm_cust_loc(cid,cntry)
+SELECT
+REPLACE(cid,'-','')cid,
+CASE WHEN TRIM(cntry) = 'DE' then 'Germany'
+	 WHEN TRIM(cntry) IN ('US', 'USA' )Then 'United States'
+	 WHEN TRIM(cntry) = '' or cntry is NULL Then 'n/a'
+	 ELSE TRIM(cntry)
+END as cntry
+FROM bronze.erp_crm_cust_loc
