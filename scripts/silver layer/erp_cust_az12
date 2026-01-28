@@ -1,0 +1,31 @@
+--- Separating catid, date cleaning, data standardisation
+Select
+CASE WHEN cid LIKE 'NAS%' Then substring (cid,4, LEN(cid))
+	ELSE cid 
+End cid,
+from bronze.erp_cust_az12
+
+---- Checking date range
+select bdate
+from bronze.erp_cust_az12
+WHERE bdate < '1924-01-01 ' or bdate > GETDATE()
+
+--- Data Standardisation
+SELECT DISTINCT gen
+from bronze.erp_cust_az12
+
+-- DDL Script
+INSERT INTO silver.erp_cust_az12(cid,bdate,gen)
+Select
+CASE WHEN cid LIKE 'NAS%' Then substring (cid,4, LEN(cid))
+	ELSE cid 
+End cid,
+CASE WHEN 
+	bdate> GETDATE() THEN NULL
+	ELSE bdate
+END as bdate,
+CASE WHEN UPPER( TRIM(gen)) IN ('F','FEMALE') Then ' Female'
+	 WHEN UPPER( TRIM(gen)) IN ('M','MALE') Then ' Male'
+	 Else 'n/a'
+END as gen
+from bronze.erp_cust_az12
