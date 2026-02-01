@@ -1,0 +1,63 @@
+-- Find total customers by countries 
+SELECT 
+country,COUNT(customer_key) as toal_customers
+FROM gold.dim_customer
+GROUP BY country
+ORDER By toal_customers DESC
+
+--- Find total customers by genders
+SELECT gender,count(customer_key) as gender_partition
+FROM gold.dim_customer
+GROUP By gender
+ORDER by gender_partition DESC 
+
+-- Inventory
+SELECT category,count(product_key) as Inventory
+FROM gold.dim_products
+GROUP BY category
+ORDER BY Inventory DESC
+
+-- Average cost per category
+
+SELECT category,avg(product_cost) as avg_costs
+FROM gold.dim_products
+GROUP BY category
+ORDER BY avg_costs DESC
+
+--- Total revenue per category
+
+SELECT 
+p.category,
+sum(f.sales_amount) as [Total revenue]
+FROM gold.fact_sales as f 
+LEFT join gold.dim_products as p
+on p.product_key = f.product_key 
+GROUP By  p.category
+Order by [Total revenue] DESC 
+
+--- Total revenue by each customer 
+SELECT 
+c.customer_key,
+c.first_name,
+c.last_name,
+sum(f.sales_amount) as [Total Revenue]
+FROM gold.fact_sales as f
+LEFT Join gold.dim_customer as c
+ON c.customer_key = f.customer_key
+GROUP BY 
+c.customer_key,
+c.first_name,
+c.last_name
+order by [Total Revenue ] DESC 
+
+--- Distribution of items sold across countries 
+
+SELECT 
+c.country,
+sum(f.quantity) as [Total items sold]
+FROM gold.fact_sales as f
+LEFT Join gold.dim_customer as c
+ON c.customer_key = f.customer_key
+GROUP BY c.country
+order by [Total items sold] DESC 
+
