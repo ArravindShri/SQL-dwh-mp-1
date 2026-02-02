@@ -1,3 +1,23 @@
+-- Segment products into cost ranges and 
+-- COunt how many products falls into each segment 
+WITH product_segment AS (
+SELECT 
+product_key,
+product_name,
+product_cost,
+CASE WHEN product_cost<100 then 'Below 100'
+     WHEN product_cost between 100 and 500 THEN '100-500'
+     WHEN product_cost between 500 and 1000 THEN '500-1000'
+     ELSE 'ABOVE 1000'
+END cost_range 
+From
+gold.dim_products
+)
+SELECT cost_range, COUNT(product_key) as total_products 
+FROM product_segment
+GROUP By cost_range
+ORDER By total_products DESC 
+
 /* Group customer into three segments based on their spending behavior
 VIP- Spending more than 5000 euros and 12 month history
 Regular- Spending 5000 euros, less and 12 month history
